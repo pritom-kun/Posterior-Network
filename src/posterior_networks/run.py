@@ -2,7 +2,7 @@ import logging
 import torch
 
 import sys
-sys.path.append("../")
+# sys.path.append("../")
 from src.dataset_manager.ClassificationDataset import ClassificationDataset
 from src.posterior_networks.PosteriorNetwork import PosteriorNetwork
 from src.posterior_networks.train import train, train_sequential

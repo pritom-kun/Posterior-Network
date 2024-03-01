@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from torch.distributions import Categorical
 from torch.distributions import Dirichlet
 from sklearn import metrics
+from torchmetrics.functional.classification import multiclass_calibration_error
 
 
 def accuracy(Y, alpha):
@@ -38,6 +39,10 @@ def brier_score(Y, alpha):
     brier_score = p.norm(dim=-1).mean().cpu().detach().numpy()
     return brier_score
 
+def expected_calibration_error(Y, alpha, num_classes, n_bins: int = 10):
+    return multiclass_calibration_error(
+        alpha, Y.squeeze(), num_classes=num_classes, n_bins=n_bins, norm="l1"
+    )
 
 # OOD detection metrics
 def anomaly_detection(alpha, ood_alpha, score_type='AUROC', uncertainty_type='aleatoric'):
