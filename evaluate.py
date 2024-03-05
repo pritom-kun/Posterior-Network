@@ -18,7 +18,7 @@ from src.posterior_networks.run import run
 seed_dataset=123
 directory_dataset='./data'
 dataset_name='CIFAR10'
-ood_dataset_names=['SVHN']
+ood_dataset_names=['SVHN', 'CIFAR100']
 unscaled_ood=True
 split=[.6, .8]
 transform_min=0.

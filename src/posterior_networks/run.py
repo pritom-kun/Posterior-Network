@@ -3,10 +3,13 @@ import torch
 
 import sys
 # sys.path.append("../")
+import torchvision.datasets as tvd  # type: ignore
+import torchvision.transforms as T
 from src.dataset_manager.ClassificationDataset import ClassificationDataset
 from src.posterior_networks.PosteriorNetwork import PosteriorNetwork
 from src.posterior_networks.train import train, train_sequential
 from src.posterior_networks.test import test
+
 
 def run(
         # Dataset parameters
@@ -163,15 +166,34 @@ def run(
     ################
     ood_dataset_loaders = {}
     for ood_dataset_name in ood_dataset_names:
-        dataset = ClassificationDataset(f'{directory_dataset}/{ood_dataset_name}.csv',
-                                        input_dims=input_dims, output_dim=output_dim,
-                                        transform_min=transform_min, transform_max=transform_max,
-                                        seed=None)
-        ood_dataset_loaders[ood_dataset_name] = torch.utils.data.DataLoader(dataset, batch_size=2 * batch_size, num_workers=4, pin_memory=True)
-        if unscaled_ood:
+        if ood_dataset_name != "CIFAR100":
             dataset = ClassificationDataset(f'{directory_dataset}/{ood_dataset_name}.csv',
                                             input_dims=input_dims, output_dim=output_dim,
+                                            transform_min=transform_min, transform_max=transform_max,
                                             seed=None)
+            ood_dataset_loaders[ood_dataset_name] = torch.utils.data.DataLoader(dataset, batch_size=2 * batch_size, num_workers=4, pin_memory=True)
+        if unscaled_ood:
+            if ood_dataset_name == "CIFAR100":
+                    print("Preparing 'CIFAR100'...")
+                    tvd.CIFAR100(f'{directory_dataset}/{ood_dataset_name}', train=False, download=True)
+                    dataset = tvd.CIFAR100(
+                                f'{directory_dataset}/{ood_dataset_name}',
+                                train=False,
+                                # transform=T.Compose([T.ToTensor(),
+                                #     T.RandomHorizontalFlip(),
+                                #     T.RandomCrop(32, 4),
+                                #     T.RandomRotation(degrees=15)
+                                #     ]
+                                # ),
+                                transform=T.Compose([T.ToTensor(),
+                                    T.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616])
+                                    ]
+                                ),
+                            )
+            else:
+                dataset = ClassificationDataset(f'{directory_dataset}/{ood_dataset_name}.csv',
+                                                input_dims=input_dims, output_dim=output_dim,
+                                                seed=None)
             ood_dataset_loaders[ood_dataset_name + '_unscaled'] = torch.utils.data.DataLoader(dataset, batch_size=2 * batch_size, num_workers=4, pin_memory=True)
     result_path = f'{directory_results}/results-dpn-{full_config_name}'
     model.load_state_dict(torch.load(f'{model_path}')['model_state_dict'])
